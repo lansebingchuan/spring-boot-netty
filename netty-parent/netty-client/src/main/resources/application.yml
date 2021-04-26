@@ -1,0 +1,7 @@
+netty:
+  server:
+    ip: 127.0.0.1
+    port: 8888
+    isHttps: false
+server:
+  port: 56050 #启动端口 命令行注入

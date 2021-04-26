@@ -1,0 +1,11 @@
+server:
+  port: 56048 #启动端口 命令行注入
+
+
+spring:
+  application:
+    name: netty-network
+
+logging:
+  config: classpath:log4j2.xml
+
