@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  **/
 @Component
 @Order(5)
-public class StartTask implements CommandLineRunner {
+public class StartNettyServerTask implements CommandLineRunner {
 
     /**
      * netty服务端

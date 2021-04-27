@@ -1,15 +1,13 @@
 package com.netty.client.handler;
 
 import cn.hutool.core.util.CharsetUtil;
+import com.netty.client.util.NettyRequestUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
@@ -102,26 +100,23 @@ public class NettyClientDataHandler extends SimpleChannelInboundHandler<HttpObje
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, HttpObject httpObject) throws Exception {
         // 获取具体的通道
         Channel channel = channelHandlerContext.channel();
-        // 判断消息体 是不是一个 http 请求
-        if (httpObject instanceof FullHttpRequest) {
-            FullHttpRequest request = (FullHttpRequest) httpObject;
-            String clientIP = this.getClientIP(channelHandlerContext, request);
-            log.info("服务端远程连接地址：{}", clientIP);
-            // 获取请求数据
-            String contentData = getContentData(request, CharsetUtil.UTF_8);
-            log.info("得到服务端请求数据：{}", contentData);
+        // 服务端响应
+        if (httpObject instanceof FullHttpResponse) {
+            FullHttpResponse response = (FullHttpResponse) httpObject;
+            String contentData = getContentData(response, CharsetUtil.UTF_8);
+            log.info("得到服务端响应数据：{}", contentData);
         }
     }
 
     /**
      * 获取请求数据
      *
-     * @param httpRequest 请求体
+     * @param message 消息体
      * @param encoding 请求编码
      * @return 请求数据体
      */
-    public String getContentData(HttpRequest httpRequest, String encoding) {
-        HttpContent httpContent = (HttpContent)httpRequest;
+    public String getContentData(HttpMessage message, String encoding) {
+        HttpContent httpContent = (HttpContent) message;
         ByteBuf contentByteBuf = httpContent.content();
         contentByteBuf.readableBytes();
         return getHttpContentAsString(contentByteBuf, encoding);
@@ -190,6 +185,6 @@ public class NettyClientDataHandler extends SimpleChannelInboundHandler<HttpObje
     public boolean sendMsg(String msg) {
 //        ctx.writeAndFlush("123456");
 //        return true;
-        return NettyResponseHandler.responseMsg(ctx, msg, true);
+        return NettyRequestUtil.sendMsg(ctx, msg, true);
     }
 }

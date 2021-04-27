@@ -1,7 +1,9 @@
 package com.netty.task;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.netty.client.NettyClientServer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
@@ -17,9 +19,10 @@ import java.util.concurrent.CompletableFuture;
  * @author: ZHT
  * @create: 2021-04-25 16:17
  **/
+@Slf4j
 @Component
 @Order(5)
-public class StartTask implements CommandLineRunner {
+public class StartNettyClientTask implements CommandLineRunner {
 
     /**
      * netty客户端端
@@ -52,7 +55,16 @@ public class StartTask implements CommandLineRunner {
             new Thread(clientServer).start();
             @SuppressWarnings("resource")
             Scanner scanner = new Scanner(System.in);
-            while(clientServer.sendMsg(scanner.nextLine()));
+            while(true) {
+                System.out.print("请输入发送消息：");
+                String msg = scanner.nextLine();
+                if (StrUtil.equals(msg, "n")) {
+                    break;
+                }else {
+                    clientServer.sendMsg(msg);
+                }
+                System.out.println();
+            }
         }
     }
 

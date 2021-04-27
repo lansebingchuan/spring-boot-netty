@@ -3,7 +3,9 @@ package com.netty.client.handler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpRequestEncoder;
+import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,10 +41,12 @@ public class NettyClientHandler extends ChannelInitializer<SocketChannel> {
         // 客户端端请求编码
         pipeline.addLast("encoder", new HttpRequestEncoder());
         // 客户端端响应解码
-        //pipeline.addLast("decoder", new HttpResponseDecoder());
+        pipeline.addLast("decoder", new HttpResponseDecoder());
+        // 发送的消息转换过滤器
         pipeline.addLast("aggregator", new HttpObjectAggregator(1048576));
+        // 超时时间
         pipeline.addLast("timeoutHandler", new ReadTimeoutHandler(60));
-        pipeline.addLast("contentCompressor", new HttpContentCompressor());
+        // 大文件传输需要过滤器
         pipeline.addLast("chunked", new ChunkedWriteHandler());
         // 自定义响应
         pipeline.addLast(nettyClientDataHandler);

@@ -35,14 +35,18 @@ public class NettyServerHandler extends ChannelInitializer<SocketChannel> {
         if ("true".equals(this.isHttps)) {
 
         }
-//        pipeline.addLast("serverCodec", new HttpServerCodec());
+        // pipeline.addLast("serverCodec", new HttpServerCodec());
         // 服务端请求解码
         pipeline.addLast("decoder", new HttpRequestDecoder());
         // 服务端响应编码
         pipeline.addLast("encoder", new HttpResponseEncoder());
+        // 实体消息转换过滤器
         pipeline.addLast("aggregator", new HttpObjectAggregator(1048576));
+        // 连接超时时间
         pipeline.addLast("timeoutHandler", new ReadTimeoutHandler(60));
+        // 使用默认的压缩级别
         pipeline.addLast("contentCompressor", new HttpContentCompressor());
+        // 增加了对异步写入大数据流的支持 ，像文件传输
         pipeline.addLast("chunked", new ChunkedWriteHandler());
         // 自定义响应
         pipeline.addLast("handler", new NettyRequestHandler());

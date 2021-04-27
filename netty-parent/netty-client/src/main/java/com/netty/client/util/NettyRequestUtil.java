@@ -1,12 +1,11 @@
-package com.netty.client.handler;
+package com.netty.client.util;
 
+import cn.hutool.core.util.ObjectUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
-import io.netty.util.AsciiString;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,7 +22,7 @@ import java.util.TimeZone;
  * @create: 2021-04-25 17:02
  **/
 @Slf4j
-public class NettyResponseHandler {
+public class NettyRequestUtil {
 
     private static SimpleDateFormat sdf = null;
 
@@ -35,14 +34,16 @@ public class NettyResponseHandler {
     }
 
     /**
-     * netty 响应 内容
+     * netty 请求服务器 并发送内容
      *
-     * @param channel 需要响应的通道
-     * @param msg 响应的消息体
+     * @param channel 与服务器建立的通道
+     * @param msg     请求的消息体
      */
-    public static boolean responseMsg(ChannelHandlerContext channel, String msg, boolean keepAlive) {
+    public static boolean sendMsg(ChannelHandlerContext channel, String msg, boolean keepAlive) {
         // 定义返回的消息，首先保存到缓存区
-        msg = "你好，我是netty服务器发送过来的, data: " + msg;
+//        msg = "\n{\n" +
+//                "    \"a\": \"张海涛\"\n" +
+//                "}";
         ByteBuf content = Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
 
         /**
@@ -50,24 +51,22 @@ public class NettyResponseHandler {
          * HttpResponseStatus.OK：状态为 ok
          * content：返回消息 ByteBuf
          */
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content);
+        FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "http://localhost:8888/1", content);
         // 设置响应头
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=UTF-8");
+        request.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
         // 设置响应长度
-        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes());
-        response.headers().set(HttpHeaderNames.CONTENT_ENCODING, cn.hutool.core.util.CharsetUtil.UTF_8);
+        request.headers().set(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes());
+        request.headers().set(HttpHeaderNames.CONTENT_ENCODING, cn.hutool.core.util.CharsetUtil.UTF_8);
         cd.setTimeInMillis(System.currentTimeMillis());
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-        response.headers().set(new AsciiString("Date"), sdf.format(cd.getTime()));
-        if (!keepAlive) {
-            channel.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-            return false;
-        } else {
-            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-            ChannelFuture channelFuture = channel.writeAndFlush(response);
-            log.info("响应结果：{}", channelFuture.isSuccess());
-            return channelFuture.isSuccess();
+
+        ChannelFuture channelFuture = channel.channel().writeAndFlush(request);
+        Throwable cause = channelFuture.cause();
+        log.info("客户端发送消息：{}，status: {}", msg, channelFuture.isSuccess());
+        if (ObjectUtil.isNotEmpty(cause)) {
+            log.info("客户端连接超时，发送失败！");
         }
+        return true;
     }
 
 }

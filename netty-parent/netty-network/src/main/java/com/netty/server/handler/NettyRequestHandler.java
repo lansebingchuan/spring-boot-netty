@@ -1,15 +1,13 @@
 package com.netty.server.handler;
 
 import cn.hutool.core.util.CharsetUtil;
+import com.netty.server.util.NettyResponseUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
@@ -100,8 +98,8 @@ public class NettyRequestHandler extends SimpleChannelInboundHandler<HttpObject>
         // 获取具体的通道
         Channel channel = channelHandlerContext.channel();
         // 判断消息体 是不是一个 http 请求
-        if (httpObject instanceof HttpRequest) {
-            HttpRequest request = (HttpRequest) httpObject;
+        if (httpObject instanceof FullHttpRequest) {
+            FullHttpRequest request = (FullHttpRequest) httpObject;
 //            FullHttpRequest request = (FullHttpRequest) httpRequest;
             String clientIP = this.getClientIP(channelHandlerContext, request);
             log.info("客户端远程连接地址：{}", clientIP);
@@ -109,7 +107,7 @@ public class NettyRequestHandler extends SimpleChannelInboundHandler<HttpObject>
             // 获取请求数据
             String contentData = getContentData(request, CharsetUtil.UTF_8);
             log.info("得到客户端请求数据：{}", contentData);
-            boolean sendFlag = NettyResponseHandler.responseMsg(channelHandlerContext, "我叫->Austin", keepAlive);
+            boolean sendFlag = NettyResponseUtil.responseMsg(channelHandlerContext, "我叫->Austin", keepAlive);
             log.info("服务器返回-》：{}", sendFlag);
         }
     }

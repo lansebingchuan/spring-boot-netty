@@ -34,11 +34,6 @@ public class NettyClientServer implements Runnable{
     private EventLoopGroup mainEventLoop;
 
     /**
-     * 从线程
-     */
-    private EventLoopGroup workEventLoop;
-
-    /**
      * 服务启动类
      */
     private Bootstrap bootstrap;
@@ -59,20 +54,22 @@ public class NettyClientServer implements Runnable{
     public void run() {
         close();
         bootstrap = new Bootstrap();
-        workEventLoop = new NioEventLoopGroup();
-        bootstrap.group(workEventLoop)
+        mainEventLoop = new NioEventLoopGroup();
+        bootstrap.group(mainEventLoop)
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .handler(clientHandler);
         try {
             ChannelFuture channelFuture = bootstrap.connect(serverIp, serverPort).sync();
+            log.info("Netty客户端启动成功，ip：{}，port：{}", serverIp, serverPort);
             //获取某个客户端所对应的chanel，关闭并设置同步方式
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
             log.info("Netty客户端启动失败，ip：{}，port：{}", serverIp, serverPort);
+        } finally {
+            close();
         }
-        log.info("Netty客户端启动成功，ip：{}，port：{}", serverIp, serverPort);
     }
 
     /**
@@ -81,7 +78,6 @@ public class NettyClientServer implements Runnable{
     private void close() {
         // 关闭线程通道
         Optional.ofNullable(mainEventLoop).map(EventExecutorGroup::shutdownGracefully);
-        Optional.ofNullable(workEventLoop).map(EventExecutorGroup::shutdownGracefully);
         log.info("netty客户端已关闭，ip: {}, port: {}！", serverIp, serverPort);
     }
 
